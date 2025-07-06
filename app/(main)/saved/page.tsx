@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { eventsApi, postsApi, tradingApi } from "@/services/api";
+import { SavedEvent, SavedListing, SavedPost } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bookmark,
@@ -28,55 +29,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-
-interface SavedPost {
-  _id: string;
-  title?: string;
-  content: string;
-  author: {
-    _id: string;
-    name: string;
-    avatar?: string;
-  };
-  createdAt: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  isLiked: boolean;
-  savedAt: string;
-}
-
-interface SavedEvent {
-  _id: string;
-  title: string;
-  description: string;
-  date: string;
-  location: string;
-  organizer: {
-    _id: string;
-    name: string;
-    avatar?: string;
-  };
-  attendees: number;
-  isAttending: boolean;
-  savedAt: string;
-}
-
-interface SavedListing {
-  _id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  images: string[];
-  seller: {
-    _id: string;
-    name: string;
-    avatar?: string;
-  };
-  location: string;
-  savedAt: string;
-}
 
 const sortOptions = [
   { value: "newest", label: "Recently Saved" },

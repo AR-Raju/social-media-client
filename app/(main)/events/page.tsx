@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { eventsApi } from "@/services/api";
+import { Event } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
@@ -46,30 +47,6 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-
-interface Event {
-  _id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  category: string;
-  organizer: {
-    _id: string;
-    name: string;
-    avatar?: string;
-    rating: number;
-  };
-  attendees: number;
-  maxAttendees?: number;
-  price: number;
-  images: string[];
-  isAttending: boolean;
-  isFavorited: boolean;
-  tags: string[];
-  createdAt: string;
-}
 
 const eventCategories = [
   "All Categories",

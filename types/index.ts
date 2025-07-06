@@ -143,6 +143,102 @@ export interface Notification {
   updatedAt: string;
 }
 
+export interface Event {
+  _id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+  organizer: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    rating: number;
+  };
+  attendees: number;
+  maxAttendees?: number;
+  price: number;
+  images: string[];
+  isAttending: boolean;
+  isFavorited: boolean;
+  tags: string[];
+  createdAt: string;
+}
+
+export interface TradingListing {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: string;
+  images: string[];
+  seller: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    rating: number;
+    totalSales: number;
+  };
+  location: string;
+  createdAt: string;
+  views: number;
+  likes: number;
+  isLiked: boolean;
+  status: "active" | "sold" | "pending";
+}
+
+export interface SavedPost {
+  _id: string;
+  title?: string;
+  content: string;
+  author: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  isLiked: boolean;
+  savedAt: string;
+}
+
+export interface SavedEvent {
+  _id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  organizer: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  attendees: number;
+  isAttending: boolean;
+  savedAt: string;
+}
+
+export interface SavedListing {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  images: string[];
+  seller: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  location: string;
+  savedAt: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;

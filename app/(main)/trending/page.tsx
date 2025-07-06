@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { tradingApi } from "@/services/api";
+import { TradingListing } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import {
   Clock,
@@ -34,29 +35,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
-
-interface TradingListing {
-  _id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  condition: string;
-  images: string[];
-  seller: {
-    _id: string;
-    name: string;
-    avatar?: string;
-    rating: number;
-    totalSales: number;
-  };
-  location: string;
-  createdAt: string;
-  views: number;
-  likes: number;
-  isLiked: boolean;
-  status: "active" | "sold" | "pending";
-}
 
 const categories = [
   "All Categories",
