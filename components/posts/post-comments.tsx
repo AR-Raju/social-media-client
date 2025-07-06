@@ -1,97 +1,101 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
-import { useAuth } from "@/context/auth-context"
-import { useToast } from "@/hooks/use-toast"
-import { commentsApi } from "@/services/api"
-import { formatDistanceToNow } from "date-fns"
-import { Heart, Send, Loader2 } from "lucide-react"
-import type { Comment } from "@/types"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { commentsApi } from "@/services/api";
+import type { Comment } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { Heart, Loader2, Send } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const commentSchema = z.object({
-  content: z.string().min(1, "Comment cannot be empty").max(1000, "Comment is too long"),
-})
+  content: z
+    .string()
+    .min(1, "Comment cannot be empty")
+    .max(1000, "Comment is too long"),
+});
 
-type CommentFormData = z.infer<typeof commentSchema>
+type CommentFormData = z.infer<typeof commentSchema>;
 
 interface PostCommentsProps {
-  postId: string
+  postId: string;
 }
 
 export function PostComments({ postId }: PostCommentsProps) {
-  const [showReplies, setShowReplies] = useState<Record<string, boolean>>({})
-  const [replyingTo, setReplyingTo] = useState<string | null>(null)
-  const { user } = useAuth()
-  const { toast } = useToast()
-  const queryClient = useQueryClient()
+  const [showReplies, setShowReplies] = useState<Record<string, boolean>>({});
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<CommentFormData>({
     resolver: zodResolver(commentSchema),
     defaultValues: { content: "" },
-  })
+  });
 
   const { data: commentsData, isLoading } = useQuery({
     queryKey: ["comments", postId],
     queryFn: () => commentsApi.getPostComments(postId, 20, 1),
-  })
+  });
 
   const addCommentMutation = useMutation({
-    mutationFn: (data: { content: string; parentComment?: string }) => commentsApi.addComment(postId, data),
+    mutationFn: (data: { content: string; parentComment?: string }) =>
+      commentsApi.addComment(postId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] })
-      form.reset()
-      setReplyingTo(null)
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      form.reset();
+      setReplyingTo(null);
     },
     onError: (error: any) => {
       toast({
         title: "Failed to add comment",
         description: error.response?.data?.message || "Something went wrong.",
         variant: "destructive",
-      })
+      });
     },
-  })
+  });
 
   const reactToCommentMutation = useMutation({
     mutationFn: ({ commentId, type }: { commentId: string; type: string }) =>
       commentsApi.reactToComment(commentId, type),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] })
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     },
-  })
+  });
 
   const onSubmit = (data: CommentFormData) => {
     addCommentMutation.mutate({
       content: data.content,
       parentComment: replyingTo || undefined,
-    })
-  }
+    });
+  };
 
   const handleReaction = (commentId: string, currentReaction?: string) => {
-    const type = currentReaction === "like" ? "none" : "like"
-    reactToCommentMutation.mutate({ commentId, type })
-  }
+    const type = currentReaction === "like" ? "none" : "like";
+    reactToCommentMutation.mutate({ commentId, type });
+  };
 
   const toggleReplies = (commentId: string) => {
-    setShowReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }))
-  }
+    setShowReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-4">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
-    )
+    );
   }
 
-  const comments = commentsData?.data?.data || []
+  const comments = commentsData?.data?.data || [];
 
   return (
     <div className="space-y-4 border-t pt-4">
@@ -99,8 +103,13 @@ export function PostComments({ postId }: PostCommentsProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex space-x-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-            <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarImage
+              src={user?.avatar || "/placeholder.svg"}
+              alt={user?.name}
+            />
+            <AvatarFallback>
+              {user?.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1 flex space-x-2">
             <FormField
@@ -110,7 +119,9 @@ export function PostComments({ postId }: PostCommentsProps) {
                 <FormItem className="flex-1">
                   <FormControl>
                     <Textarea
-                      placeholder={replyingTo ? "Write a reply..." : "Write a comment..."}
+                      placeholder={
+                        replyingTo ? "Write a reply..." : "Write a comment..."
+                      }
                       className="min-h-[40px] resize-none"
                       {...field}
                     />
@@ -118,7 +129,13 @@ export function PostComments({ postId }: PostCommentsProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" size="sm" disabled={addCommentMutation.isPending || !form.watch("content").trim()}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={
+                addCommentMutation.isPending || !form.watch("content").trim()
+              }
+            >
               {addCommentMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -144,13 +161,20 @@ export function PostComments({ postId }: PostCommentsProps) {
           <div key={comment._id} className="space-y-2">
             <div className="flex space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.author.avatar || "/placeholder.svg"} alt={comment.author.name} />
-                <AvatarFallback>{comment.author.name.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarImage
+                  src={comment.author.avatar || "/placeholder.svg"}
+                  alt={comment.author.name}
+                />
+                <AvatarFallback>
+                  {comment.author.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-1">
                 <div className="bg-muted rounded-lg p-3">
                   <div className="flex items-center space-x-2 mb-1">
-                    <span className="font-semibold text-sm">{comment.author.name}</span>
+                    <span className="font-semibold text-sm">
+                      {comment.author.name}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.createdAt))} ago
                     </span>
@@ -161,18 +185,33 @@ export function PostComments({ postId }: PostCommentsProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`h-auto p-0 ${comment.userReaction === "like" ? "text-blue-500" : ""}`}
-                    onClick={() => handleReaction(comment._id, comment.userReaction)}
+                    className={`h-auto p-0 ${
+                      comment.userReaction === "like" ? "text-blue-500" : ""
+                    }`}
+                    onClick={() =>
+                      handleReaction(comment._id, comment.userReaction)
+                    }
                   >
                     <Heart className="h-3 w-3 mr-1" />
                     {comment.reactions.like > 0 && comment.reactions.like}
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-auto p-0" onClick={() => setReplyingTo(comment._id)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0"
+                    onClick={() => setReplyingTo(comment._id)}
+                  >
                     Reply
                   </Button>
-                  {comment.repliesCount > 0 && (
-                    <Button variant="ghost" size="sm" className="h-auto p-0" onClick={() => toggleReplies(comment._id)}>
-                      {showReplies[comment._id] ? "Hide" : "View"} {comment.repliesCount} replies
+                  {comment.replies && comment.replies.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0"
+                      onClick={() => toggleReplies(comment._id)}
+                    >
+                      {showReplies[comment._id] ? "Hide" : "View"}{" "}
+                      {comment.replies.length} replies
                     </Button>
                   )}
                 </div>
@@ -185,13 +224,20 @@ export function PostComments({ postId }: PostCommentsProps) {
                 {comment.replies.map((reply: Comment) => (
                   <div key={reply._id} className="flex space-x-3">
                     <Avatar className="h-6 w-6">
-                      <AvatarImage src={reply.author.avatar || "/placeholder.svg"} alt={reply.author.name} />
-                      <AvatarFallback>{reply.author.name.charAt(0).toUpperCase()}</AvatarFallback>
+                      <AvatarImage
+                        src={reply.author.avatar || "/placeholder.svg"}
+                        alt={reply.author.name}
+                      />
+                      <AvatarFallback>
+                        {reply.author.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="bg-muted rounded-lg p-2">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-semibold text-xs">{reply.author.name}</span>
+                          <span className="font-semibold text-xs">
+                            {reply.author.name}
+                          </span>
                           <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(reply.createdAt))} ago
                           </span>
@@ -207,5 +253,5 @@ export function PostComments({ postId }: PostCommentsProps) {
         ))}
       </div>
     </div>
-  )
+  );
 }
