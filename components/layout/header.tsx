@@ -1,14 +1,10 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,37 +12,41 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useAuth } from "@/context/auth-context"
-import { useSocket } from "@/context/socket-context"
-import { Bell, Search, Sun, Moon, Settings, LogOut, User } from "lucide-react"
-import { useTheme } from "next-themes"
-import { useQuery } from "@tanstack/react-query"
-import { notificationsApi } from "@/services/api"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/auth-context";
+import { useSocket } from "@/context/socket-context";
+import { notificationsApi } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, LogOut, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { useTheme } from "next-themes";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function Header() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const { user, logout } = useAuth()
-  const { isConnected } = useSocket()
-  const { theme, setTheme } = useTheme()
-  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user, logout } = useAuth();
+  const { isConnected } = useSocket();
+  const { theme, setTheme } = useTheme();
+  const router = useRouter();
 
   const { data: unreadCount } = useQuery({
     queryKey: ["notifications", "unread-count"],
     queryFn: () => notificationsApi.getUnreadCount(),
     refetchInterval: 30000, // Refetch every 30 seconds
-  })
+  });
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
-  }
+  };
 
   const handleProfileClick = () => {
-    router.push(`/profile/${user?.name.toLowerCase().replace(/\s+/g, "")}`)
-  }
+    router.push(`/profile/${user?._id.toLowerCase().replace(/\s+/g, "")}`);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -54,9 +54,13 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">SC</span>
+            <span className="text-primary-foreground font-bold text-sm">
+              SC
+            </span>
           </div>
-          <span className="font-bold text-xl hidden sm:inline-block">SocialConnect</span>
+          <span className="font-bold text-xl hidden sm:inline-block">
+            SocialConnect
+          </span>
         </Link>
 
         {/* Search */}
@@ -77,25 +81,42 @@ export function Header() {
         <div className="flex items-center space-x-2">
           {/* Connection Status */}
           <div className="hidden sm:flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
-            <span className="text-xs text-muted-foreground">{isConnected ? "Online" : "Offline"}</span>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isConnected ? "bg-green-500" : "bg-red-500"
+              }`}
+            />
+            <span className="text-xs text-muted-foreground">
+              {isConnected ? "Online" : "Offline"}
+            </span>
           </div>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative" onClick={() => router.push("/notifications")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => router.push("/notifications")}
+          >
             <Bell className="h-5 w-5" />
             {unreadCount?.data?.count > 0 && (
               <Badge
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
               >
-                {unreadCount.data.count > 99 ? "99+" : unreadCount.data.count}
+                {unreadCount?.data?.count > 99
+                  ? "99+"
+                  : unreadCount?.data?.count}
               </Badge>
             )}
           </Button>
 
           {/* Theme Toggle */}
-          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
@@ -103,18 +124,30 @@ export function Header() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Button
+                variant="ghost"
+                className="relative h-10 w-10 rounded-full"
+              >
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                  <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarImage
+                    src={user?.avatar || "/placeholder.svg"}
+                    alt={user?.name}
+                  />
+                  <AvatarFallback>
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.name}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -136,5 +169,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

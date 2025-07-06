@@ -1,45 +1,69 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useToast } from "@/hooks/use-toast"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { groupsApi, uploadApi } from "@/services/api"
-import { Loader2, Upload } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { groupsApi, uploadApi } from "@/services/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Upload } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const createGroupSchema = z.object({
-  name: z.string().min(2, "Group name must be at least 2 characters").max(100, "Group name is too long"),
-  description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description is too long"),
+  name: z
+    .string()
+    .min(2, "Group name must be at least 2 characters")
+    .max(100, "Group name is too long"),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(1000, "Description is too long"),
   category: z.string().min(1, "Please select a category"),
   privacy: z.enum(["public", "private"]),
+  type: z.literal("group"),
+  avatar: z.string().optional(),
   tags: z.string().optional(),
   rules: z.string().optional(),
-})
+});
 
-type CreateGroupFormData = z.infer<typeof createGroupSchema>
+type CreateGroupFormData = z.infer<typeof createGroupSchema>;
 
 interface CreateGroupDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps) {
-  const [avatar, setAvatar] = useState<string>("")
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const { toast } = useToast()
-  const queryClient = useQueryClient()
+export function CreateGroupDialog({
+  open,
+  onOpenChange,
+}: CreateGroupDialogProps) {
+  const [avatar, setAvatar] = useState<string>("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<CreateGroupFormData>({
     resolver: zodResolver(createGroupSchema),
@@ -48,10 +72,11 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
       description: "",
       category: "",
       privacy: "public",
+      type: "group",
       tags: "",
       rules: "",
     },
-  })
+  });
 
   const categories = [
     "Technology",
@@ -66,53 +91,53 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
     "Health",
     "Science",
     "Entertainment",
-  ]
+  ];
 
   const createGroupMutation = useMutation({
     mutationFn: groupsApi.createGroup,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] })
+      queryClient.invalidateQueries({ queryKey: ["groups"] });
       toast({
         title: "Group created successfully!",
         description: "Your group has been created and you are now the admin.",
-      })
-      onOpenChange(false)
-      form.reset()
-      setAvatar("")
-      setAvatarFile(null)
+      });
+      onOpenChange(false);
+      form.reset();
+      setAvatar("");
+      setAvatarFile(null);
     },
     onError: (error: any) => {
       toast({
         title: "Failed to create group",
         description: error.response?.data?.message || "Something went wrong.",
         variant: "destructive",
-      })
+      });
     },
-  })
+  });
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      setAvatarFile(file)
+      setAvatarFile(file);
       // Create preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        setAvatar(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
+        setAvatar(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const onSubmit = async (data: CreateGroupFormData) => {
     try {
-      let avatarUrl = ""
+      let avatarUrl = "";
 
       // Upload avatar if selected
       if (avatarFile) {
-        setIsUploading(true)
-        const uploadResponse = await uploadApi.uploadImage(avatarFile)
-        avatarUrl = uploadResponse.data.url
-        setIsUploading(false)
+        setIsUploading(true);
+        const uploadResponse = await uploadApi.uploadImage(avatarFile);
+        avatarUrl = uploadResponse.data.url;
+        setIsUploading(false);
       }
 
       const groupData = {
@@ -130,25 +155,27 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               .map((rule) => rule.trim())
               .filter(Boolean)
           : [],
-      }
+      };
 
-      createGroupMutation.mutate(groupData)
+      createGroupMutation.mutate(groupData);
     } catch (error) {
-      setIsUploading(false)
+      setIsUploading(false);
       toast({
         title: "Failed to upload image",
         description: "Please try again.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Group</DialogTitle>
-          <DialogDescription>Create a group to bring people together around shared interests.</DialogDescription>
+          <DialogDescription>
+            Create a group to bring people together around shared interests.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -158,7 +185,11 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               <div className="relative">
                 <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                   {avatar ? (
-                    <img src={avatar || "/placeholder.svg"} alt="Group avatar" className="w-full h-full object-cover" />
+                    <img
+                      src={avatar || "/placeholder.svg"}
+                      alt="Group avatar"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <Upload className="w-8 h-8 text-gray-400" />
                   )}
@@ -171,7 +202,9 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                   disabled={isUploading}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">Upload group picture (optional)</p>
+              <p className="text-xs text-muted-foreground">
+                Upload group picture (optional)
+              </p>
             </div>
 
             <FormField
@@ -213,7 +246,10 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <select {...field} className="w-full px-3 py-2 border rounded-md bg-background">
+                    <select
+                      {...field}
+                      className="w-full px-3 py-2 border rounded-md bg-background"
+                    >
                       <option value="">Select a category</option>
                       {categories.map((category) => (
                         <option key={category} value={category}>
@@ -244,7 +280,9 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                         <Label htmlFor="public" className="flex-1">
                           <div>
                             <p className="font-medium">Public</p>
-                            <p className="text-sm text-muted-foreground">Anyone can see and join this group</p>
+                            <p className="text-sm text-muted-foreground">
+                              Anyone can see and join this group
+                            </p>
                           </div>
                         </Label>
                       </div>
@@ -273,9 +311,14 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                 <FormItem>
                   <FormLabel>Tags (optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter tags separated by commas" {...field} />
+                    <Input
+                      placeholder="Enter tags separated by commas"
+                      {...field}
+                    />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">e.g. programming, javascript, web development</p>
+                  <p className="text-xs text-muted-foreground">
+                    e.g. programming, javascript, web development
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -294,7 +337,9 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                       {...field}
                     />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">Each line will be a separate rule</p>
+                  <p className="text-xs text-muted-foreground">
+                    Each line will be a separate rule
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -309,8 +354,13 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createGroupMutation.isPending || isUploading}>
-                {(createGroupMutation.isPending || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button
+                type="submit"
+                disabled={createGroupMutation.isPending || isUploading}
+              >
+                {(createGroupMutation.isPending || isUploading) && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Create Group
               </Button>
             </div>
@@ -318,5 +368,5 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

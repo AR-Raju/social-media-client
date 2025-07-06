@@ -33,6 +33,24 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+// Demo users data
+const demoUsers = [
+  {
+    id: 1,
+    name: "John Doe",
+    email: "john.doe@example.com",
+    password: "password123",
+    avatar: "👨‍💼",
+  },
+  {
+    id: 2,
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    password: "password123",
+    avatar: "👩‍💻",
+  },
+];
+
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,8 +60,8 @@ export default function LoginPage() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "john.doe@example.com",
-      password: "password123",
+      email: "",
+      password: "",
     },
   });
 
@@ -74,6 +92,15 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDemoLogin = (demoUser: (typeof demoUsers)[0]) => {
+    form.setValue("email", demoUser.email);
+    form.setValue("password", demoUser.password);
+    toast({
+      title: "Demo user selected",
+      description: `Filled form with ${demoUser.name}'s credentials`,
+    });
   };
 
   const handleGoogleLogin = () => {
@@ -108,6 +135,41 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Demo Users Section */}
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-center text-muted-foreground">
+              Quick Demo Login
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {demoUsers.map((user) => (
+                <Button
+                  key={user.id}
+                  variant="outline"
+                  className="h-auto p-3 flex flex-col items-center gap-2 hover:bg-primary/5 bg-transparent"
+                  onClick={() => handleDemoLogin(user)}
+                  type="button"
+                >
+                  <div className="text-2xl">{user.avatar}</div>
+                  <div className="text-xs font-medium">{user.name}</div>
+                  <div className="text-xs text-muted-foreground truncate w-full">
+                    {user.email}
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or sign in manually
+              </span>
+            </div>
+          </div>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

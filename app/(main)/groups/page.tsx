@@ -1,36 +1,37 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { groupsApi } from "@/services/api"
-import { Search, Users, Plus, Compass, Settings } from "lucide-react"
-import { GroupCard } from "@/components/groups/group-card"
-import { CreateGroupDialog } from "@/components/groups/create-group-dialog"
+import { CreateGroupDialog } from "@/components/groups/create-group-dialog";
+import { GroupCard } from "@/components/groups/group-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { groupsApi } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
+import { Compass, Plus, Search, Settings, Users } from "lucide-react";
+import { useState } from "react";
 
 export default function GroupsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: allGroups } = useQuery({
     queryKey: ["groups", "all", selectedCategory],
-    queryFn: () => groupsApi.getAllGroups(20, selectedCategory || undefined, "public"),
-  })
+    queryFn: () =>
+      groupsApi.getAllGroups(20, selectedCategory || undefined, "public"),
+  });
 
   const { data: myGroups } = useQuery({
     queryKey: ["groups", "my"],
     queryFn: () => groupsApi.getMyGroups(50),
-  })
+  });
 
   const { data: suggestions } = useQuery({
     queryKey: ["groups", "suggestions"],
     queryFn: () => groupsApi.getGroupSuggestions(10),
-  })
+  });
 
   const categories = [
     "Technology",
@@ -45,14 +46,14 @@ export default function GroupsPage() {
     "Health",
     "Science",
     "Entertainment",
-  ]
+  ];
 
   const filteredGroups =
     allGroups?.data?.data?.filter(
       (group: any) =>
         group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.description.toLowerCase().includes(searchTerm.toLowerCase()),
-    ) || []
+        group.description.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   return (
     <div className="space-y-6">
@@ -94,12 +95,20 @@ export default function GroupsPage() {
             <Compass className="h-4 w-4" />
             <span>Discover</span>
           </TabsTrigger>
-          <TabsTrigger value="my-groups" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="my-groups"
+            className="flex items-center space-x-2"
+          >
             <Users className="h-4 w-4" />
             <span>My Groups</span>
-            {myGroups?.data?.data && <Badge variant="secondary">{myGroups.data.data.length}</Badge>}
+            {myGroups?.data?.data && (
+              <Badge variant="secondary">{myGroups.data.data.length}</Badge>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="suggestions" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="suggestions"
+            className="flex items-center space-x-2"
+          >
             <Settings className="h-4 w-4" />
             <span>Suggested</span>
           </TabsTrigger>
@@ -107,7 +116,7 @@ export default function GroupsPage() {
 
         <TabsContent value="discover" className="space-y-4">
           {filteredGroups.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredGroups.map((group: any) => (
                 <GroupCard key={group._id} group={group} />
               ))}
@@ -118,7 +127,8 @@ export default function GroupsPage() {
                 <Compass className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No groups found</h3>
                 <p className="text-muted-foreground text-center">
-                  Try adjusting your search terms or browse different categories.
+                  Try adjusting your search terms or browse different
+                  categories.
                 </p>
               </CardContent>
             </Card>
@@ -127,7 +137,7 @@ export default function GroupsPage() {
 
         <TabsContent value="my-groups" className="space-y-4">
           {myGroups?.data?.data && myGroups.data.data.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {myGroups.data.data.map((group: any) => (
                 <GroupCard key={group._id} group={group} isMember={true} />
               ))}
@@ -140,7 +150,10 @@ export default function GroupsPage() {
                 <p className="text-muted-foreground text-center">
                   Join some groups to see them here, or create your own!
                 </p>
-                <Button className="mt-4" onClick={() => setShowCreateDialog(true)}>
+                <Button
+                  className="mt-4"
+                  onClick={() => setShowCreateDialog(true)}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Group
                 </Button>
@@ -151,7 +164,7 @@ export default function GroupsPage() {
 
         <TabsContent value="suggestions" className="space-y-4">
           {suggestions?.data?.data && suggestions.data.data.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
               {suggestions.data.data.map((group: any) => (
                 <GroupCard key={group._id} group={group} />
               ))}
@@ -170,7 +183,10 @@ export default function GroupsPage() {
         </TabsContent>
       </Tabs>
 
-      <CreateGroupDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
+      <CreateGroupDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </div>
-  )
+  );
 }

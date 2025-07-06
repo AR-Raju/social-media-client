@@ -101,6 +101,10 @@ export const postsApi = {
     api.post(`/posts/${postId}/share`, { content }),
   getUserPosts: (userId: string, limit = 10, page = 1) =>
     api.get(`/posts/user/${userId}?limit=${limit}&page=${page}`),
+  getSavedPosts: (page = 1, limit = 10) =>
+    api.get(`/posts/saved?page=${page}&limit=${limit}`),
+  savePost: (id: string) => api.post(`/posts/${id}/save`),
+  unsavePost: (id: string) => api.delete(`/posts/${id}/save`),
 };
 
 // Comments API
@@ -203,6 +207,43 @@ export const uploadApi = {
       },
     });
   },
+};
+
+// Events API
+export const eventsApi = {
+  getEvents: (page = 1, limit = 10) =>
+    api.get(`/events?page=${page}&limit=${limit}`),
+  getEvent: (id: string) => api.get(`/events/${id}`),
+  createEvent: (data: any) => api.post("/events", data),
+  updateEvent: (id: string, data: any) => api.put(`/events/${id}`, data),
+  deleteEvent: (id: string) => api.delete(`/events/${id}`),
+  joinEvent: (id: string) => api.post(`/events/${id}/join`),
+  leaveEvent: (id: string) => api.post(`/events/${id}/leave`),
+  getMyEvents: (page = 1, limit = 10) =>
+    api.get(`/events/my?page=${page}&limit=${limit}`),
+  getEventAttendees: (id: string, page = 1, limit = 10) =>
+    api.get(`/events/${id}/attendees?page=${page}&limit=${limit}`),
+};
+
+// Trading API
+export const tradingApi = {
+  getListings: (page = 1, limit = 10, category?: string) =>
+    api.get(
+      `/trading/listings?page=${page}&limit=${limit}${
+        category ? `&category=${category}` : ""
+      }`
+    ),
+  getListing: (id: string) => api.get(`/trading/listings/${id}`),
+  createListing: (data: any) => api.post("/trading/listings", data),
+  updateListing: (id: string, data: any) =>
+    api.put(`/trading/listings/${id}`, data),
+  deleteListing: (id: string) => api.delete(`/trading/listings/${id}`),
+  getMyListings: (page = 1, limit = 10) =>
+    api.get(`/trading/my-listings?page=${page}&limit=${limit}`),
+  contactSeller: (listingId: string, data: any) =>
+    api.post(`/trading/listings/${listingId}/contact`, data),
+  markAsSold: (id: string) => api.post(`/trading/listings/${id}/sold`),
+  getCategories: () => api.get("/trading/categories"),
 };
 
 export default api;
