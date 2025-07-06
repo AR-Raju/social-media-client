@@ -104,11 +104,11 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+    window.location.href = `https://social-media-server1.vercel.app/auth/google`;
   };
 
   const handleFacebookLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/facebook`;
+    window.location.href = `https://social-media-server1.vercel.app/auth/facebook`;
   };
 
   // Debug function
@@ -229,26 +229,26 @@ export default function LoginPage() {
           </Form>
 
           {/* Debug button - remove in production */}
-          <Button
+          {/* <Button
             variant="outline"
             className="w-full bg-transparent"
             onClick={handleDebug}
           >
             🐛 Debug Info (Check Console)
-          </Button>
+          </Button> */}
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
+            {/* <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
                 Or continue with
               </span>
-            </div>
+            </div> */}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* <div className="grid grid-cols-2 gap-4">
             <Button variant="outline" onClick={handleGoogleLogin}>
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -280,9 +280,9 @@ export default function LoginPage() {
               </svg>
               Facebook
             </Button>
-          </div>
+          </div> */}
 
-          <div className="text-center text-sm">
+          <div className="text-center text-sm" style={{ marginTop: "30px" }}>
             {"Don't have an account? "}
             <Link href="/register" className="text-primary hover:underline">
               Sign up
