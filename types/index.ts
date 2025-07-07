@@ -13,6 +13,7 @@ export interface User {
   lastSeen?: string;
   friendsCount?: number;
   postsCount?: number;
+  mutualFriends?: number;
   privacy?: {
     profileVisibility: "public" | "friends" | "private";
     friendListVisibility: "public" | "friends" | "private";
@@ -31,6 +32,11 @@ export interface Post {
   visibility: "public" | "friends" | "private";
   tags?: string[];
   location?: string;
+  feeling?: string;
+  activity?: {
+    type: string;
+    description: string;
+  };
   sharedPost?: Post;
   reactions: {
     like: string[];
@@ -43,6 +49,7 @@ export interface Post {
   userReaction?: string;
   commentsCount: number;
   sharesCount: number;
+  isSaved?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -163,6 +170,7 @@ export interface Event {
   images: string[];
   isAttending: boolean;
   isFavorited: boolean;
+  isSaved?: boolean;
   tags: string[];
   createdAt: string;
 }
@@ -187,6 +195,7 @@ export interface TradingListing {
   views: number;
   likes: number;
   isLiked: boolean;
+  isSaved?: boolean;
   status: "active" | "sold" | "pending";
 }
 

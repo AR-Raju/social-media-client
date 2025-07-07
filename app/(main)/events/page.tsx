@@ -49,16 +49,17 @@ import {
 import { useState } from "react";
 
 const eventCategories = [
-  "All Categories",
-  "Music & Concerts",
-  "Sports & Fitness",
-  "Food & Drink",
-  "Arts & Culture",
-  "Business & Networking",
-  "Technology",
-  "Education",
-  "Community",
-  "Other",
+  { key: "all", label: "All Categories" },
+  { key: "music", label: "Music & Concerts" },
+  { key: "sports", label: "Sports & Fitness" },
+  { key: "technology", label: "Technology" },
+  { key: "business", label: "Business & Networking" },
+  { key: "education", label: "Education" },
+  { key: "food", label: "Food & Drink" },
+  { key: "art", label: "Arts & Culture" },
+  { key: "health", label: "Health & Wellness" },
+  { key: "social", label: "Community" },
+  { key: "other", label: "Other" },
 ];
 
 const sortOptions = [
@@ -292,8 +293,8 @@ export default function EventsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {eventCategories.slice(1).map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
+                        <SelectItem key={category.key} value={category.key}>
+                          {category.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -376,8 +377,8 @@ export default function EventsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {eventCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
+                      <SelectItem key={category.key} value={category.key}>
+                        {category.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -400,7 +401,7 @@ export default function EventsPage() {
 
           {/* Events Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <div className="aspect-video bg-muted rounded-t-lg" />
@@ -413,7 +414,7 @@ export default function EventsPage() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {events?.data?.data?.map((event: Event) => (
                 <Card
                   key={event._id}

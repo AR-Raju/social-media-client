@@ -5,6 +5,13 @@ import type React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/auth-context";
@@ -26,11 +33,49 @@ const createPostSchema = z.object({
 
 type CreatePostFormData = z.infer<typeof createPostSchema>;
 
+const feelings = [
+  { emoji: "😊", label: "happy", color: "text-yellow-500" },
+  { emoji: "😢", label: "sad", color: "text-blue-500" },
+  { emoji: "😍", label: "loved", color: "text-red-500" },
+  { emoji: "😴", label: "tired", color: "text-gray-500" },
+  { emoji: "🎉", label: "excited", color: "text-purple-500" },
+  { emoji: "😤", label: "frustrated", color: "text-orange-500" },
+  { emoji: "🤔", label: "thoughtful", color: "text-indigo-500" },
+  { emoji: "😎", label: "cool", color: "text-cyan-500" },
+  { emoji: "🥳", label: "celebrating", color: "text-pink-500" },
+  { emoji: "😌", label: "peaceful", color: "text-green-500" },
+];
+
+const activities = [
+  { emoji: "🍕", label: "eating", activity: "pizza" },
+  { emoji: "🎬", label: "watching", activity: "a movie" },
+  { emoji: "📚", label: "reading", activity: "a book" },
+  { emoji: "🎵", label: "listening to", activity: "music" },
+  { emoji: "🏃", label: "exercising", activity: "" },
+  { emoji: "✈️", label: "traveling to", activity: "" },
+  { emoji: "🎮", label: "playing", activity: "games" },
+  { emoji: "☕", label: "drinking", activity: "coffee" },
+  { emoji: "🛍️", label: "shopping", activity: "" },
+  { emoji: "🎨", label: "creating", activity: "art" },
+];
+
 export function CreatePost() {
   const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [location, setLocation] = useState("");
+  const [selectedFeeling, setSelectedFeeling] = useState<{
+    emoji: string;
+    label: string;
+    color: string;
+  } | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<{
+    emoji: string;
+    label: string;
+    activity: string;
+  } | null>(null);
+  const [customActivity, setCustomActivity] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [showFeelingDialog, setShowFeelingDialog] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -50,6 +95,9 @@ export function CreatePost() {
       setImages([]);
       setImageFiles([]);
       setLocation("");
+      setSelectedFeeling(null);
+      setSelectedActivity(null);
+      setCustomActivity("");
       toast({
         title: "Post created successfully!",
         description: "Your post has been shared with your friends.",
@@ -71,11 +119,8 @@ export function CreatePost() {
     setIsUploading(true);
     try {
       const uploadPromises = files.map((file) => uploadApi.uploadImage(file));
-      console.log("Uploading images:", uploadPromises);
       const responses = await Promise.all(uploadPromises);
-      console.log("Image upload responses:", responses);
       const imageUrls = responses.map((response) => response.data.data.url);
-      console.log("Uploaded image URLs:", imageUrls);
 
       setImages((prev) => [...prev, ...imageUrls]);
       setImageFiles((prev) => [...prev, ...files]);
@@ -96,12 +141,30 @@ export function CreatePost() {
   };
 
   const onSubmit = async (data: CreatePostFormData) => {
+    let postContent = data.content;
+
+    // Add feeling/activity to content
+    if (selectedFeeling) {
+      postContent += ` — feeling ${selectedFeeling.label} ${selectedFeeling.emoji}`;
+    }
+    if (selectedActivity) {
+      const activityText = customActivity || selectedActivity.activity;
+      postContent += ` — ${selectedActivity.label} ${activityText} ${selectedActivity.emoji}`;
+    }
+
     createPostMutation.mutate({
-      content: data.content,
+      content: postContent,
       images: images,
       type: images.length > 0 ? "image" : "text",
       visibility: "public",
       location: location || undefined,
+      feeling: selectedFeeling?.label,
+      activity: selectedActivity
+        ? {
+            type: selectedActivity.label,
+            description: customActivity || selectedActivity.activity,
+          }
+        : undefined,
     });
   };
 
@@ -140,6 +203,42 @@ export function CreatePost() {
                 />
               </div>
             </div>
+
+            {/* Feeling/Activity Display */}
+            {(selectedFeeling || selectedActivity) && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-accent/50 rounded-lg">
+                {selectedFeeling && (
+                  <div className="flex items-center gap-1">
+                    <span>feeling</span>
+                    <span className={selectedFeeling.color}>
+                      {selectedFeeling.label} {selectedFeeling.emoji}
+                    </span>
+                  </div>
+                )}
+                {selectedActivity && (
+                  <div className="flex items-center gap-1">
+                    {selectedFeeling && <span>—</span>}
+                    <span>{selectedActivity.label}</span>
+                    <span>
+                      {customActivity || selectedActivity.activity}{" "}
+                      {selectedActivity.emoji}
+                    </span>
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedFeeling(null);
+                    setSelectedActivity(null);
+                    setCustomActivity("");
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
 
             {/* Image Previews */}
             {images.length > 0 && (
@@ -226,15 +325,105 @@ export function CreatePost() {
                   Location
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
+                <Dialog
+                  open={showFeelingDialog}
+                  onOpenChange={setShowFeelingDialog}
                 >
-                  <Smile className="mr-2 h-4 w-4" />
-                  Feeling
-                </Button>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-muted-foreground"
+                    >
+                      <Smile className="mr-2 h-4 w-4" />
+                      Feeling/Activity
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>How are you feeling?</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium mb-2">Feelings</h4>
+                        <div className="grid grid-cols-5 gap-2">
+                          {feelings.map((feeling) => (
+                            <Button
+                              key={feeling.label}
+                              type="button"
+                              variant={
+                                selectedFeeling?.label === feeling.label
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              className="flex flex-col h-auto p-2"
+                              onClick={() => setSelectedFeeling(feeling)}
+                            >
+                              <span className="text-lg">{feeling.emoji}</span>
+                              <span className="text-xs">{feeling.label}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium mb-2">Activities</h4>
+                        <div className="grid grid-cols-5 gap-2">
+                          {activities.map((activity) => (
+                            <Button
+                              key={activity.label}
+                              type="button"
+                              variant={
+                                selectedActivity?.label === activity.label
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              className="flex flex-col h-auto p-2"
+                              onClick={() => setSelectedActivity(activity)}
+                            >
+                              <span className="text-lg">{activity.emoji}</span>
+                              <span className="text-xs">{activity.label}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {selectedActivity && (
+                        <div>
+                          <label className="text-sm font-medium">
+                            Custom activity (optional)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder={`e.g., ${selectedActivity.activity}`}
+                            value={customActivity}
+                            onChange={(e) => setCustomActivity(e.target.value)}
+                            className="w-full mt-1 px-3 py-2 border rounded-md"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowFeelingDialog(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowFeelingDialog(false)}
+                        >
+                          Done
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
 
               <Button
