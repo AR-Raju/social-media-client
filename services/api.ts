@@ -155,7 +155,7 @@ export const messagesApi = {
     api.post(`/messages/send/${userId}`, data),
   getConversations: (limit = 20) =>
     api.get(`/messages/conversations?limit=${limit}`),
-  getMessages: (userId: string, limit = 50, page = 1) =>
+  getMessages: (userId: string, limit = 20, page = 1) =>
     api.get(`/messages/${userId}?limit=${limit}&page=${page}`),
   markAsRead: (userId: string) => api.patch(`/messages/${userId}/read`),
 };

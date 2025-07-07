@@ -1,39 +1,43 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { useSearchParams } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { messagesApi } from "@/services/api"
-import { Search, MessageCircle } from "lucide-react"
-import { ChatWindow } from "@/components/messages/chat-window"
-import { formatDistanceToNow } from "date-fns"
+import { ChatWindow } from "@/components/messages/chat-window";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/auth-context";
+import { messagesApi } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { MessageCircle, Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function MessagesPage() {
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const searchParams = useSearchParams()
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   const { data: conversations } = useQuery({
     queryKey: ["conversations"],
     queryFn: () => messagesApi.getConversations(20),
     refetchInterval: 30000, // Refetch every 30 seconds
-  })
+  });
 
   // Handle URL parameter for direct message
   useEffect(() => {
-    const userId = searchParams.get("user")
+    const userId = searchParams.get("user");
     if (userId) {
-      setSelectedUserId(userId)
+      setSelectedUserId(userId);
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   const filteredConversations =
     conversations?.data?.data?.filter((conv: any) =>
-      conv.participants.some((p: any) => p.name.toLowerCase().includes(searchTerm.toLowerCase())),
-    ) || []
+      conv.participants.some((p: any) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    ) || [];
 
   return (
     <div className="h-[calc(100vh-8rem)] flex">
@@ -57,9 +61,10 @@ export default function MessagesPage() {
             <div className="space-y-1 p-2">
               {filteredConversations.map((conversation: any) => {
                 const otherParticipant = conversation.participants.find(
-                  (p: any) => p._id !== conversation.currentUserId,
-                )
-                const isSelected = selectedUserId === otherParticipant?._id
+                  (p: any) => p._id !== user?._id
+                );
+                console.log("otherParticipant", otherParticipant);
+                const isSelected = selectedUserId === otherParticipant?._id;
 
                 return (
                   <div
@@ -75,7 +80,9 @@ export default function MessagesPage() {
                           src={otherParticipant?.avatar || "/placeholder.svg"}
                           alt={otherParticipant?.name}
                         />
-                        <AvatarFallback>{otherParticipant?.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>
+                          {otherParticipant?.name?.charAt(0).toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       {otherParticipant?.isOnline && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
@@ -83,9 +90,14 @@ export default function MessagesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold truncate">{otherParticipant?.name}</p>
+                        <p className="font-semibold truncate">
+                          {otherParticipant?.name}
+                        </p>
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(conversation.updatedAt))} ago
+                          {formatDistanceToNow(
+                            new Date(conversation.updatedAt)
+                          )}{" "}
+                          ago
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
@@ -98,7 +110,7 @@ export default function MessagesPage() {
                       </Badge>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           ) : (
@@ -120,11 +132,15 @@ export default function MessagesPage() {
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
             <MessageCircle className="h-16 w-16 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Select a conversation</h2>
-            <p className="text-muted-foreground">Choose a conversation from the sidebar to start messaging.</p>
+            <h2 className="text-xl font-semibold mb-2">
+              Select a conversation
+            </h2>
+            <p className="text-muted-foreground">
+              Choose a conversation from the sidebar to start messaging.
+            </p>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
