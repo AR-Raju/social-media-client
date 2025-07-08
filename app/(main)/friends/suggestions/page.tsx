@@ -11,6 +11,7 @@ import { friendsApi } from "@/services/api";
 import type { User } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Briefcase, MapPin, Search, UserPlus, Users, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function SuggestedFriendsPage() {
@@ -103,25 +104,27 @@ export default function SuggestedFriendsPage() {
               className="hover:shadow-md transition-shadow"
             >
               <CardContent className="p-6">
-                <div className="flex items-start space-x-3 mb-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src={friend.avatar || "/placeholder.svg"}
-                      alt={friend.name}
-                    />
-                    <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold line-clamp-1">
-                      {friend.name}
-                    </h3>
-                    {friend.mutualFriends && friend.mutualFriends > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        {friend.mutualFriends} mutual friends
-                      </p>
-                    )}
+                <Link href={`/profile/${friend._id}`}>
+                  <div className="flex items-start space-x-3 mb-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={friend.avatar || "/placeholder.svg"}
+                        alt={friend.name}
+                      />
+                      <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold line-clamp-1">
+                        {friend.name}
+                      </h3>
+                      {friend.mutualFriends && friend.mutualFriends > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {friend.mutualFriends} mutual friends
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* User Info */}
                 <div className="space-y-2 mb-4">

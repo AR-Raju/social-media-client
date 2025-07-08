@@ -28,9 +28,9 @@ import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { authApi, uploadApi, usersApi } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Loader2, Lock, Shield, Upload, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -45,8 +45,6 @@ const profileSchema = z.object({
     .or(z.literal("")),
   work: z.string().optional(),
   education: z.string().optional(),
-  avatar: z.string().url("Avatar must be a valid URL").optional(),
-  coverPhoto: z.string().url("Cover photo must be a valid URL").optional(),
 });
 
 const passwordSchema = z
@@ -76,18 +74,17 @@ export default function SettingsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const profileForm = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || "",
-      bio: user?.bio || "",
-      location: user?.location || "",
-      website: user?.website || "",
-      work: user?.work || "",
-      education: user?.education || "",
-      avatar: user?.avatar || "",
-      coverPhoto: user?.coverPhoto || "",
+      name: "",
+      bio: "",
+      location: "",
+      website: "",
+      work: "",
+      education: "",
     },
   });
 
@@ -103,25 +100,71 @@ export default function SettingsPage() {
   const privacyForm = useForm<PrivacyFormData>({
     resolver: zodResolver(privacySchema),
     defaultValues: {
-      profileVisibility: user?.privacy?.profileVisibility || "public",
-      friendListVisibility: user?.privacy?.friendListVisibility || "friends",
-      postVisibility: user?.privacy?.postVisibility || "friends",
+      profileVisibility: "public",
+      friendListVisibility: "friends",
+      postVisibility: "friends",
     },
   });
 
-  const updateProfileMutation = useMutation({
-    mutationFn: usersApi.updateProfile,
-    onSuccess: (data) => {
-      updateUser(data.data.data);
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+  // Update form values when user data is available
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        name: user.name || "",
+        bio: user.bio || "",
+        location: user.location || "",
+        website: user.website || "",
+        work: user.work || "",
+        education: user.education || "",
       });
+
+      privacyForm.reset({
+        profileVisibility: user.privacy?.profileVisibility || "public",
+        friendListVisibility: user.privacy?.friendListVisibility || "friends",
+        postVisibility: user.privacy?.postVisibility || "friends",
+      });
+
+      setAvatar(user.avatar || "");
+    }
+  }, [user, profileForm, privacyForm]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: any) => {
+      console.log("Updating profile with data:", data);
+      return usersApi.updateProfile(data);
+    },
+    onSuccess: (response) => {
+      console.log("Profile update response:", response);
+
+      // Handle different response structures
+      const userData =
+        response.data?.data || response.data?.user || response.data;
+
+      if (userData) {
+        updateUser(userData);
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["user"] });
+
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been updated successfully.",
+        });
+      } else {
+        console.error("No user data in response:", response);
+        toast({
+          title: "Update successful",
+          description: "Your profile has been updated.",
+        });
+      }
     },
     onError: (error: any) => {
+      console.error("Profile update error:", error);
       toast({
         title: "Failed to update profile",
-        description: error.response?.data?.message || "Something went wrong.",
+        description:
+          error.response?.data?.message ||
+          error.message ||
+          "Something went wrong.",
         variant: "destructive",
       });
     },
@@ -137,9 +180,13 @@ export default function SettingsPage() {
       });
     },
     onError: (error: any) => {
+      console.error("Password change error:", error);
       toast({
         title: "Failed to change password",
-        description: error.response?.data?.message || "Something went wrong.",
+        description:
+          error.response?.data?.message ||
+          error.message ||
+          "Something went wrong.",
         variant: "destructive",
       });
     },
@@ -148,6 +195,26 @@ export default function SettingsPage() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setAvatarFile(file);
       // Create preview
       const reader = new FileReader();
@@ -160,24 +227,54 @@ export default function SettingsPage() {
 
   const onProfileSubmit = async (data: ProfileFormData) => {
     try {
+      console.log("Form submitted with data:", data);
+
       let avatarUrl = user?.avatar || "";
 
       // Upload avatar if selected
       if (avatarFile) {
+        console.log("Uploading avatar...");
         setIsUploading(true);
-        const uploadResponse = await uploadApi.uploadImage(avatarFile);
-        avatarUrl = uploadResponse.data.data.url;
+
+        try {
+          const uploadResponse = await uploadApi.uploadImage(avatarFile);
+          console.log("Avatar upload response:", uploadResponse);
+
+          avatarUrl =
+            uploadResponse.data?.data?.url || uploadResponse.data?.url || "";
+
+          if (!avatarUrl) {
+            throw new Error("No URL returned from upload");
+          }
+
+          console.log("Avatar uploaded successfully:", avatarUrl);
+        } catch (uploadError) {
+          console.error("Avatar upload failed:", uploadError);
+          setIsUploading(false);
+          toast({
+            title: "Failed to upload image",
+            description: "Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         setIsUploading(false);
       }
 
-      updateProfileMutation.mutate({
+      // Prepare update data
+      const updateData = {
         ...data,
-        avatar: avatarUrl,
-      });
+        ...(avatarUrl && { avatar: avatarUrl }),
+      };
+
+      console.log("Submitting profile update:", updateData);
+      updateProfileMutation.mutate(updateData);
     } catch (error) {
+      console.error("Profile submit error:", error);
       setIsUploading(false);
       toast({
-        title: "Failed to upload image",
+        title: "Failed to update profile",
         description: "Please try again.",
         variant: "destructive",
       });
@@ -185,6 +282,7 @@ export default function SettingsPage() {
   };
 
   const onPasswordSubmit = (data: PasswordFormData) => {
+    console.log("Password change submitted");
     changePasswordMutation.mutate({
       oldPassword: data.oldPassword,
       newPassword: data.newPassword,
@@ -192,10 +290,13 @@ export default function SettingsPage() {
   };
 
   const onPrivacySubmit = (data: PrivacyFormData) => {
+    console.log("Privacy settings submitted:", data);
     updateProfileMutation.mutate({
       privacy: data,
     });
   };
+
+  const isProfileLoading = updateProfileMutation.isPending || isUploading;
 
   return (
     <div className="space-y-6">
@@ -391,11 +492,8 @@ export default function SettingsPage() {
                     )}
                   />
 
-                  <Button
-                    type="submit"
-                    disabled={updateProfileMutation.isPending || isUploading}
-                  >
-                    {(updateProfileMutation.isPending || isUploading) && (
+                  <Button type="submit" disabled={isProfileLoading}>
+                    {isProfileLoading && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
                     Save Changes
